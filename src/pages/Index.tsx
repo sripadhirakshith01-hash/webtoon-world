@@ -1,9 +1,9 @@
 import { ManhwaCard } from "@/components/ManhwaCard";
-import { AddManhwaDialog } from "@/components/AddManhwaDialog";
+import { AddManhwaForm } from "@/components/AddManhwaForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, Star } from "lucide-react";
+import { Search, Plus, BookOpen, Star } from "lucide-react";
 import { useState } from "react";
 import { useManhwa } from "@/hooks/useManhwa";
 import heroImage from "@/assets/hero-manhwa.jpg";
@@ -11,7 +11,13 @@ import heroImage from "@/assets/hero-manhwa.jpg";
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const { manhwa: manhwaData, loading, error, refetch } = useManhwa();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const { manhwa: manhwaData, loading, fetchManhwa } = useManhwa();
+
+  const handleAddSuccess = () => {
+    setShowAddForm(false);
+    fetchManhwa();
+  };
 
   const allGenres = Array.from(new Set(manhwaData.flatMap(manhwa => manhwa.genre)));
 
@@ -34,7 +40,13 @@ const Index = () => {
                 ManhwaHub
               </h1>
             </div>
-            <AddManhwaDialog onManhwaAdded={refetch} />
+            <Button 
+              onClick={() => setShowAddForm(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Manhwa
+            </Button>
           </div>
         </div>
       </header>
@@ -74,8 +86,19 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Add Manhwa Form */}
+      {showAddForm && (
+        <section className="container mx-auto px-4 py-8">
+          <AddManhwaForm 
+            onSuccess={handleAddSuccess}
+            onCancel={() => setShowAddForm(false)}
+          />
+        </section>
+      )}
+
       {/* Search and Filters */}
-      <section className="container mx-auto px-4 py-8">
+      {!showAddForm && (
+        <section className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -113,12 +136,6 @@ const Index = () => {
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading manhwa...</p>
           </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Error loading manhwa</h3>
-            <p className="text-muted-foreground">{error}</p>
-          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -144,7 +161,8 @@ const Index = () => {
             )}
           </>
         )}
-      </section>
+        </section>
+      )}
     </div>
   );
 };
