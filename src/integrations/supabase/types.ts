@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapters: {
+        Row: {
+          chapter_number: number
+          created_at: string
+          id: string
+          manhwa_id: string
+          pages: string[] | null
+          publish_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_number: number
+          created_at?: string
+          id?: string
+          manhwa_id: string
+          pages?: string[] | null
+          publish_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_number?: number
+          created_at?: string
+          id?: string
+          manhwa_id?: string
+          pages?: string[] | null
+          publish_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_manhwa_id_fkey"
+            columns: ["manhwa_id"]
+            isOneToOne: false
+            referencedRelation: "manhwa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manhwa: {
+        Row: {
+          author: string
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          genre: string[] | null
+          id: string
+          rating: number | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string[] | null
+          id?: string
+          rating?: number | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string[] | null
+          id?: string
+          rating?: number | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

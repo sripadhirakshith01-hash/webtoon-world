@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, BookOpen } from "lucide-react";
-import { Manhwa } from "@/data/manhwa";
+import { Manhwa } from "@/hooks/useManhwa";
 import { useNavigate } from "react-router-dom";
 
 interface ManhwaCardProps {
@@ -16,7 +16,7 @@ export const ManhwaCard = ({ manhwa }: ManhwaCardProps) => {
     <Card className="group relative overflow-hidden bg-card border-border hover:shadow-[var(--manhwa-card-hover)] transition-all duration-300 hover:scale-105">
       <div className="relative aspect-[3/4] overflow-hidden">
         <img 
-          src={manhwa.coverImage} 
+          src={manhwa.cover_image || "/placeholder.svg"} 
           alt={manhwa.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         />
