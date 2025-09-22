@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ManhwaDetail from "./pages/ManhwaDetail";
 import ChapterReader from "./pages/ChapterReader";
+import AddManhwa from "./pages/AddManhwa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,9 +19,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/add-manhwa" element={<AddManhwa />} />
           <Route path="/manhwa/:id" element={<ManhwaDetail />} />
           <Route path="/manhwa/:id/chapter/:chapterNumber" element={<ChapterReader />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

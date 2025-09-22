@@ -1,17 +1,18 @@
 import { ManhwaCard } from "@/components/ManhwaCard";
-import { AddManhwaDialog } from "@/components/AddManhwaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, Star } from "lucide-react";
+import { Search, BookOpen, Star, Plus } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useManhwa } from "@/hooks/useManhwa";
 import heroImage from "@/assets/hero-manhwa.jpg";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const { manhwa: manhwaData, loading, error, refetch } = useManhwa();
+  const { manhwa: manhwaData, loading } = useManhwa();
+  const navigate = useNavigate();
 
   const allGenres = Array.from(new Set(manhwaData.flatMap(manhwa => manhwa.genre)));
 
@@ -34,7 +35,13 @@ const Index = () => {
                 ManhwaHub
               </h1>
             </div>
-            <AddManhwaDialog onManhwaAdded={refetch} />
+            <Button 
+              onClick={() => navigate('/add-manhwa')}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Manhwa
+            </Button>
           </div>
         </div>
       </header>
@@ -112,12 +119,6 @@ const Index = () => {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading manhwa...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Error loading manhwa</h3>
-            <p className="text-muted-foreground">{error}</p>
           </div>
         ) : (
           <>
