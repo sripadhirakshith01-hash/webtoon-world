@@ -1,33 +1,73 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { manhwaData } from "@/data/manhwa";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Home } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Manhwa, Chapter } from "@/hooks/useManhwa";
 
 const ChapterReader = () => {
-  const { id, chapterNumber } = useParams();
+  const { id, chapterId } = useParams();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0);
+  const [manhwa, setManhwa] = useState<Manhwa | null>(null);
+  const [chapter, setChapter] = useState<Chapter | null>(null);
+  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const manhwa = manhwaData.find(m => m.id === id);
-  const chapter = manhwa?.chapters.find(c => c.number === Number(chapterNumber));
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id || !chapterId) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch chapter details
+        const { data: chapterData, error: chapterError } = await supabase
+          .from('chapters')
+          .select('*')
+          .eq('id', chapterId)
+          .single();
 
-  if (!manhwa || !chapter) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Chapter not found</h1>
-          <Button onClick={() => navigate('/')}>Back to Home</Button>
-        </div>
-      </div>
-    );
-  }
+        if (chapterError) throw chapterError;
+        
+        // Fetch manhwa details
+        const { data: manhwaData, error: manhwaError } = await supabase
+          .from('manhwa')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-  const nextChapter = manhwa.chapters.find(c => c.number === chapter.number + 1);
-  const prevChapter = manhwa.chapters.find(c => c.number === chapter.number - 1);
+        if (manhwaError) throw manhwaError;
+        
+        // Fetch all chapters for navigation
+        const { data: chaptersData, error: chaptersError } = await supabase
+          .from('chapters')
+          .select('*')
+          .eq('manhwa_id', id)
+          .order('chapter_number', { ascending: true });
+
+        if (chaptersError) throw chaptersError;
+        
+        setChapter(chapterData);
+        setManhwa(manhwaData as Manhwa);
+        setAllChapters(chaptersData);
+      } catch (err) {
+        console.error('Error fetching chapter data:', err);
+        setError('Failed to load chapter');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, chapterId]);
+
+  const nextChapter = allChapters.find(c => c.chapter_number === (chapter?.chapter_number || 0) + 1);
+  const prevChapter = allChapters.find(c => c.chapter_number === (chapter?.chapter_number || 0) - 1);
 
   const goToNextPage = () => {
-    if (currentPage < chapter.pages.length - 1) {
+    if (chapter && currentPage < chapter.pages.length - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -37,6 +77,41 @@ const ChapterReader = () => {
       setCurrentPage(currentPage - 1);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading chapter...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !manhwa || !chapter) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Chapter not found</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => navigate('/')}>Back to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (chapter.pages.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">No pages available</h1>
+          <p className="text-muted-foreground mb-4">This chapter doesn't have any pages yet.</p>
+          <Button onClick={() => navigate(`/manhwa/${manhwa.id}`)}>Back to Chapters</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,7 +140,7 @@ const ChapterReader = () => {
               </Button>
             </div>
             <div className="text-center">
-              <h1 className="font-bold">Chapter {chapter.number}: {chapter.title}</h1>
+              <h1 className="font-bold">Chapter {chapter.chapter_number}: {chapter.title}</h1>
               <p className="text-sm text-muted-foreground">
                 Page {currentPage + 1} of {chapter.pages.length}
               </p>
@@ -75,7 +150,7 @@ const ChapterReader = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${prevChapter.number}`)}
+                  onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${prevChapter.id}`)}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Prev Ch
@@ -84,7 +159,7 @@ const ChapterReader = () => {
               {nextChapter && (
                 <Button 
                   size="sm"
-                  onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${nextChapter.number}`)}
+                  onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${nextChapter.id}`)}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Next Ch
@@ -171,7 +246,7 @@ const ChapterReader = () => {
             {nextChapter && (
               <Button 
                 size="sm"
-                onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${nextChapter.number}`)}
+                onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${nextChapter.id}`)}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Next Chapter

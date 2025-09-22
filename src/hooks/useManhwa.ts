@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Manhwa {
   id: string;
@@ -34,17 +34,49 @@ export const useManhwa = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("manhwa")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from('manhwa')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setManhwa((data || []) as Manhwa[]);
     } catch (err) {
-      console.error("Error fetching manhwa:", err);
-      setError("Failed to fetch manhwa");
+      console.error('Error fetching manhwa:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch manhwa');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getManhwaById = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('manhwa')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Error fetching manhwa:', err);
+      throw err;
+    }
+  };
+
+  const getChaptersByManhwaId = async (manhwaId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('manhwa_id', manhwaId)
+        .order('chapter_number', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching chapters:', err);
+      throw err;
     }
   };
 
@@ -52,38 +84,12 @@ export const useManhwa = () => {
     fetchManhwa();
   }, []);
 
-  return { manhwa, loading, error, refetch: fetchManhwa };
-};
-
-export const useChapters = (manhwaId: string) => {
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchChapters = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("chapters")
-          .select("*")
-          .eq("manhwa_id", manhwaId)
-          .order("chapter_number", { ascending: true });
-
-        if (error) throw error;
-        setChapters(data || []);
-      } catch (err) {
-        console.error("Error fetching chapters:", err);
-        setError("Failed to fetch chapters");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (manhwaId) {
-      fetchChapters();
-    }
-  }, [manhwaId]);
-
-  return { chapters, loading, error };
+  return {
+    manhwa,
+    loading,
+    error,
+    refetch: fetchManhwa,
+    getManhwaById,
+    getChaptersByManhwaId,
+  };
 };

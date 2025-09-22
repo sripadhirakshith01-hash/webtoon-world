@@ -1,21 +1,63 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { manhwaData } from "@/data/manhwa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Star, Calendar, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useManhwa } from "@/hooks/useManhwa";
+import { Manhwa, Chapter } from "@/hooks/useManhwa";
 
 const ManhwaDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getManhwaById, getChaptersByManhwaId } = useManhwa();
   
-  const manhwa = manhwaData.find(m => m.id === id);
+  const [manhwa, setManhwa] = useState<Manhwa | null>(null);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!manhwa) {
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const [manhwaData, chaptersData] = await Promise.all([
+          getManhwaById(id),
+          getChaptersByManhwaId(id)
+        ]);
+        
+        setManhwa(manhwaData as Manhwa);
+        setChapters(chaptersData);
+      } catch (err) {
+        console.error('Error fetching manhwa details:', err);
+        setError('Failed to load manhwa details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, getManhwaById, getChaptersByManhwaId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading manhwa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !manhwa) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Manhwa not found</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => navigate('/')}>Back to Home</Button>
         </div>
       </div>
@@ -43,13 +85,13 @@ const ManhwaDetail = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent z-10" />
         <div 
           className="h-96 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${manhwa.coverImage})` }}
+          style={{ backgroundImage: `url(${manhwa.cover_image || '/placeholder.svg'})` }}
         />
         <div className="absolute inset-0 z-20 flex items-end">
           <div className="container mx-auto px-4 pb-8">
             <div className="flex flex-col md:flex-row gap-6 items-end">
               <img 
-                src={manhwa.coverImage} 
+                src={manhwa.cover_image || '/placeholder.svg'} 
                 alt={manhwa.title}
                 className="w-48 h-72 object-cover rounded-lg shadow-2xl border border-border"
               />
@@ -68,7 +110,7 @@ const ManhwaDetail = () => {
                   </Badge>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <BookOpen className="w-4 h-4" />
-                    <span>{manhwa.chapters.length} chapters</span>
+                    <span>{chapters.length} chapters</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -91,37 +133,44 @@ const ManhwaDetail = () => {
           <div className="md:col-span-2">
             <h2 className="text-2xl font-bold mb-4">Synopsis</h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              {manhwa.description}
+              {manhwa.description || 'No description available.'}
             </p>
 
             {/* Chapters */}
             <div>
               <h2 className="text-2xl font-bold mb-6">Chapters</h2>
-              <div className="space-y-3">
-                {manhwa.chapters.map((chapter) => (
-                  <Card key={chapter.id} className="hover:bg-card/80 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">
-                            Chapter {chapter.number}: {chapter.title}
-                          </h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(chapter.publishDate).toLocaleDateString()}
+              {chapters.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No chapters available yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {chapters.map((chapter) => (
+                    <Card key={chapter.id} className="hover:bg-card/80 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">
+                              Chapter {chapter.chapter_number}: {chapter.title}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                              <Calendar className="w-4 h-4" />
+                              {new Date(chapter.publish_date).toLocaleDateString()}
+                            </div>
                           </div>
+                          <Button 
+                            onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${chapter.id}`)}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            Read
+                          </Button>
                         </div>
-                        <Button 
-                          onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${chapter.number}`)}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          Read
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -131,13 +180,15 @@ const ManhwaDetail = () => {
               <CardContent className="p-6">
                 <h3 className="font-bold text-lg mb-4">Quick Actions</h3>
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/1`)}
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Start Reading
-                  </Button>
+                  {chapters.length > 0 && (
+                    <Button 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => navigate(`/manhwa/${manhwa.id}/chapter/${chapters[0].id}`)}
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Start Reading
+                    </Button>
+                  )}
                   <Button variant="outline" className="w-full">
                     Add to Favorites
                   </Button>

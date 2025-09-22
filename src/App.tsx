@@ -21,7 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/add-manhwa" element={<AddManhwa />} />
           <Route path="/manhwa/:id" element={<ManhwaDetail />} />
-          <Route path="/manhwa/:id/chapter/:chapterNumber" element={<ChapterReader />} />
+          <Route path="/manhwa/:id/chapter/:chapterId" element={<ChapterReader />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
