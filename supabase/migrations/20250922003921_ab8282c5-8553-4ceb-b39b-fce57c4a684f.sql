@@ -1,0 +1,5 @@
+-- Insert sample data
+INSERT INTO public.manhwa (title, author, description, cover_image, genre, status, rating) VALUES 
+('Shadow Realm Chronicles', 'Kim Hana', 'A young warrior discovers mysterious powers that connect him to an ancient shadow realm. As dark forces threaten both worlds, he must master his abilities to save everything he holds dear.', 'src/assets/manhwa-1.jpg', ARRAY['Fantasy', 'Action', 'Supernatural'], 'ongoing', 4.8),
+('Neon Assassin', 'Park Jinho', 'In a cyberpunk future, a skilled assassin navigates the neon-lit streets while uncovering a conspiracy that threatens the entire city. Technology and martial arts collide in this thrilling adventure.', 'src/assets/manhwa-2.jpg', ARRAY['Cyberpunk', 'Action', 'Thriller'], 'ongoing', 4.7),
+('Elemental Academy', 'Lee Minseo', 'A prestigious magical academy trains young mages to master the elements. Follow the journey of a talented student as they navigate friendships, rivalries, and ancient mysteries.', 'src/assets/manhwa-3.jpg', ARRAY['Magic', 'School', 'Adventure'], 'completed', 4.9);
